@@ -37,6 +37,8 @@ async function main() {
 	await tracker.init();
 	currentRoomGrid = await scenes.setScene(hud.getScene());
 	orbit.setRoomGrid(currentRoomGrid);
+	const p0 = hud.getPos();
+	scenes.setSubjectOffset(p0.x, p0.y, p0.z);
 	setStatus('ready - click "Start camera"');
 
 	// UI events
@@ -65,6 +67,8 @@ async function main() {
 		currentRoomGrid?.dispose?.();
 		currentRoomGrid = await scenes.setScene(kind);
 		orbit.setRoomGrid(currentRoomGrid);
+		const p = hud.getPos();
+		scenes.setSubjectOffset(p.x, p.y, p.z);
 	});
 
 	hud.on('camViewToggle', (on) => {
@@ -73,6 +77,10 @@ async function main() {
 
 	hud.on('axesToggle', (on) => {
 		scenes.setAxesVisible(on);
+	});
+
+	hud.on('posChange', (p) => {
+		scenes.setSubjectOffset(p.x, p.y, p.z);
 	});
 
 	// resize

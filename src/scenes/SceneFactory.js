@@ -7,12 +7,17 @@ export class SceneFactory {
 		this.world = world;
 		this.loader = new GLTFLoader();
 		this.axes = null;
+		this.subject = null;
 	}
 
 	async setScene(kind) {
 		this.world.clearContent();
 
 		this._addAxes(1.4);
+		this.subject = new THREE.Group();
+		this.subject.name = 'subject';
+		this.world.content.add(this.subject);
+
 
 		const roomGrid = new RoomGrid().build({ width: 8, height: 4, depth: 8, div: 16 }).addTo(this.world.content);
 
@@ -38,6 +43,12 @@ export class SceneFactory {
 		if (this.axes) this.axes.visible = !!on;
 	}
 
+	setSubjectOffset(x, y, z) {
+		if (!this.subject) return;
+		this.subject.position.set(x, y, z);
+	}
+
+
 	_cube() {
 		const mesh = new THREE.Mesh(
 			new THREE.BoxGeometry(1, 1, 1),
@@ -45,7 +56,7 @@ export class SceneFactory {
 		);
 		mesh.castShadow = true;
 		mesh.position.set(0, 1.0, 0);
-		this.world.content.add(mesh);
+		this.subject.add(mesh);
 	}
 
 	_pyramid() {
@@ -56,7 +67,7 @@ export class SceneFactory {
 		mesh.castShadow = true;
 		mesh.position.set(0, 0.9, 0);
 		mesh.rotation.y = Math.PI / 4;
-		this.world.content.add(mesh);
+		this.subject.add(mesh);
 
 		const base = new THREE.Mesh(
 			new THREE.BoxGeometry(1.7, 0.08, 1.7),
@@ -64,7 +75,7 @@ export class SceneFactory {
 		);
 		base.receiveShadow = true;
 		base.position.set(0, 0.04, 0);
-		this.world.content.add(base);
+		this.subject.add(base);
 	}
 
 	_hemisphere() {
@@ -102,7 +113,7 @@ export class SceneFactory {
 		);
 		icosa.position.set(0, 1.1, 0);
 		icosa.castShadow = true;
-		this.world.content.add(icosa);
+		this.subject.add(icosa);
 	}
 
 	_proceduralHouse() {
@@ -158,7 +169,7 @@ export class SceneFactory {
 		);
 		base.receiveShadow = true;
 		base.position.set(0, 0.09, 0);
-		this.world.content.add(base);
+		this.subject.add(base);
 
 		const url = '/models/house.glb';
 
@@ -191,11 +202,11 @@ export class SceneFactory {
 			});
 
 			model.position.set(0, 0.18, 0);
-			this.world.content.add(model);
+			this.subject.add(model);
 		} catch {
 			const house = this._proceduralHouse();
 			house.position.set(0, 0.18, 0);
-			this.world.content.add(house);
+			this.subject.add(house);
 		}
 	}
 }

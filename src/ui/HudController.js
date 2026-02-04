@@ -20,7 +20,8 @@ export class HudController {
 			calibrate: [],
 			sceneChange: [],
 			camViewToggle: [],
-			axesToggle: []
+			axesToggle: [],
+			posChange: []
 		};
 
 		this._debugOn = false;
@@ -32,7 +33,9 @@ export class HudController {
 		this.btnToggleDebug.textContent = 'Debug: OFF';
 		this.btnToggleCamView.textContent = 'Show Camera';
 		this.debugEl.style.display = 'none';
-
+		this.posX = doc.getElementById('posX');
+		this.posY = doc.getElementById('posY');
+		this.posZ = doc.getElementById('posZ');
 
 		this._wireEvents(doc);
 	}
@@ -71,6 +74,17 @@ export class HudController {
 			this._emit('axesToggle', this.toggleAxes.checked);
 		});
 
+		const emitPos = () => {
+			this._emit('posChange', {
+				x: parseFloat(this.posX.value),
+				y: parseFloat(this.posY.value),
+				z: parseFloat(this.posZ.value),
+			});
+		};
+
+		this.posX.addEventListener('input', emitPos);
+		this.posY.addEventListener('input', emitPos);
+		this.posZ.addEventListener('input', emitPos);
 	}
 
 	on(eventName, cb) {
@@ -89,6 +103,13 @@ export class HudController {
 	isDebugOn() { return this._debugOn; }
 	isCamViewOn() { return this._camViewOn; }
 	areAxesOn() { return this.toggleAxes.checked; }
+	getPos() {
+		return {
+			x: parseFloat(this.posX.value),
+			y: parseFloat(this.posY.value),
+			z: parseFloat(this.posZ.value),
+		};
+	}
 
 	// UI updates
 	setStatus(text) { this.statusEl.textContent = text; }

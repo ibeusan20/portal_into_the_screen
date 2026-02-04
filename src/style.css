@@ -148,6 +148,10 @@ label.inline {
   font-size: 13px;
   color: #cfd2dd;
 }
+
 label.inline input[type="checkbox"] {
   transform: translateY(1px);
 }
+
+label .subcontrol:last-child { margin-top: 10px; }
+
