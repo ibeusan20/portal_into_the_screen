@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="hr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Head‑tracked 3D (Web + webcam)</title>
+</head>
+
+<body>
+  <div id="app">
+    <canvas id="c"></canvas>
+
+    <!-- UI overlay -->
+    <div id="hud">
+      <div class="row">
+        <strong>Head‑tracked 3D</strong>
+        <span class="pill" id="status">initialization…</span>
+      </div>
+
+      <div class="row grid">
+        <label>
+          Scene
+          <select id="sceneSelect">
+            <option value="cube" selected>Cube (test)</option>
+            <option value="pyramid">Pyramid</option>
+            <option value="hemisphere">Hemisphere (dome)</option>
+            <option value="house">House (glTF if available)</option>
+          </select>
+
+          <div class="subcontrol">
+            <div class="subcontrol-title">Smoothing (EMA)</div>
+            <input id="smoothing" type="range" min="0" max="0.95" step="0.01" value="0.20" />
+          </div>
+
+          <div class="subcontrol">
+            <div class="subcontrol-title">Effect strength</div>
+            <input id="parallax" type="range" min="0" max="1.5" step="0.01" value="0.55" />
+          </div>
+        </label>
+      </div>
+
+
+      <div class="row buttons">
+        <button id="btnStart">Start Camera</button>
+        <button id="btnCalibrate" title="Space">Calibrate (Space)</button>
+        <button id="btnToggleDebug">Debug: ON</button>
+        <button id="btnCollapse">Hide Menu</button>
+      </div>
+
+      <div id="debug"></div>
+
+      <p class="hint">
+        Tip: The camera in the browser only works on <code>https</code> <br> or on <code>http://localhost</code>.
+        If there is no detection, <br> check the lighting and make sure your face is visible.
+      </p>
+    </div>
+
+    <!-- Video is hidden; used only as a source for detection -->
+    <video id="video" autoplay playsinline muted></video>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
