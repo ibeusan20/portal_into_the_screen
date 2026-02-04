@@ -28,8 +28,8 @@ async function main() {
 	// tracker updates -> only for status text
 	tracker.setOnUpdate((t) => {
 		if (!tracker.isRunning()) return;
-		if (t.hasFace) setStatus('camera OK • face detected');
-		else setStatus('camera OK • no face (move closer / more light)');
+		if (t.hasFace) setStatus('camera OK - face detected');
+		else setStatus('camera OK - no face (move closer / more light)');
 	});
 
 	// initial scene
@@ -37,7 +37,7 @@ async function main() {
 	await tracker.init();
 	currentRoomGrid = await scenes.setScene(hud.getScene());
 	orbit.setRoomGrid(currentRoomGrid);
-	setStatus('ready • click "Start camera"');
+	setStatus('ready - click "Start camera"');
 
 	// UI events
 	hud.on('startStop', async () => {
