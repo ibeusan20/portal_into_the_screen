@@ -25,7 +25,7 @@ html, body {
   bottom: 10px;
   width: 240px;
   height: 180px;
-  opacity: 0.0; /* 0.35 if camera is visible */
+  opacity: 0.60; /* 0.35 if camera is visible */
   pointer-events: none;
   border-radius: 10px;
 }
@@ -55,6 +55,14 @@ html, body {
   gap: 10px;
   margin-bottom: 10px;
   flex-wrap: wrap;
+}
+
+.row.buttons {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  gap: 10px;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .grid {

@@ -21,6 +21,7 @@ const debugEl = document.getElementById('debug');
 const btnStart = document.getElementById('btnStart');
 const btnCalibrate = document.getElementById('btnCalibrate');
 const btnToggleDebug = document.getElementById('btnToggleDebug');
+const btnToggleCamView = document.getElementById('btnToggleCamView');
 
 const sceneSelect = document.getElementById('sceneSelect');
 const strengthSlider = document.getElementById('parallax'); // effect strength (head movement -> angle)
@@ -578,6 +579,7 @@ function tick() {
 
 const hud = document.getElementById('hud');
 const btnCollapse = document.getElementById('btnCollapse');
+let camViewOn = false;
 
 hud.classList.add('collapsed');
 btnCollapse.textContent = 'Show menu';
@@ -606,6 +608,18 @@ btnToggleDebug.addEventListener('click', () => {
   debugOn = !debugOn;
   btnToggleDebug.textContent = debugOn ? 'Debug: ON' : 'Debug: OFF';
   updateDebug();
+});
+
+function setCamView(on) {
+  camViewOn = on;
+  video.style.display = on ? 'block' : 'none';
+  btnToggleCamView.textContent = on ? 'Hide Camera' : 'Show Camera';
+}
+
+setCamView(false);
+
+btnToggleCamView.addEventListener('click', () => {
+  setCamView(!camViewOn);
 });
 
 sceneSelect.addEventListener('change', () => setScene(sceneSelect.value));
