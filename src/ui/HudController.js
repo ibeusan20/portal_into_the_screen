@@ -13,12 +13,14 @@ export class HudController {
 		this.sceneSelect = doc.getElementById('sceneSelect');
 		this.strengthSlider = doc.getElementById('parallax');
 		this.smoothingSlider = doc.getElementById('smoothing');
+		this.toggleAxes = doc.getElementById('toggleAxes');
 
 		this._listeners = {
 			startStop: [],
 			calibrate: [],
 			sceneChange: [],
-			camViewToggle: []
+			camViewToggle: [],
+			axesToggle: []
 		};
 
 		this._debugOn = false;
@@ -30,6 +32,7 @@ export class HudController {
 		this.btnToggleDebug.textContent = 'Debug: OFF';
 		this.btnToggleCamView.textContent = 'Show Camera';
 		this.debugEl.style.display = 'none';
+
 
 		this._wireEvents(doc);
 	}
@@ -63,6 +66,11 @@ export class HudController {
 		this.sceneSelect.addEventListener('change', () => {
 			this._emit('sceneChange', this.sceneSelect.value);
 		});
+
+		this.toggleAxes.addEventListener('change', () => {
+			this._emit('axesToggle', this.toggleAxes.checked);
+		});
+
 	}
 
 	on(eventName, cb) {
@@ -80,6 +88,7 @@ export class HudController {
 	getSmoothing() { return parseFloat(this.smoothingSlider.value); }
 	isDebugOn() { return this._debugOn; }
 	isCamViewOn() { return this._camViewOn; }
+	areAxesOn() { return this.toggleAxes.checked; }
 
 	// UI updates
 	setStatus(text) { this.statusEl.textContent = text; }

@@ -71,6 +71,10 @@ async function main() {
 		setVideoVisible(on);
 	});
 
+	hud.on('axesToggle', (on) => {
+		scenes.setAxesVisible(on);
+	});
+
 	// resize
 	window.addEventListener('resize', () => world.resize());
 

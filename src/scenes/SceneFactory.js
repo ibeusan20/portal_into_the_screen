@@ -6,6 +6,7 @@ export class SceneFactory {
 	constructor(world) {
 		this.world = world;
 		this.loader = new GLTFLoader();
+		this.axes = null;
 	}
 
 	async setScene(kind) {
@@ -24,9 +25,17 @@ export class SceneFactory {
 	}
 
 	_addAxes(size = 1.2) {
-		const axes = new THREE.AxesHelper(size);
-		axes.position.copy(this.world.target);
-		this.world.content.add(axes);
+		if (this.axes) {
+			this.axes.removeFromParent?.();
+			this.axes = null;
+		}
+		this.axes = new THREE.AxesHelper(size);
+		this.axes.position.copy(this.world.target);
+		this.world.content.add(this.axes);
+	}
+
+	setAxesVisible(on) {
+		if (this.axes) this.axes.visible = !!on;
 	}
 
 	_cube() {
