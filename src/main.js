@@ -35,8 +35,15 @@ async function main() {
 	// initial scene
 	setStatus('initializing…');
 	await tracker.init();
-	currentRoomGrid = await scenes.setScene(hud.getScene());
+
+	let roomParams = hud.getRoomParams();
+
+	currentRoomGrid = await scenes.setScene(hud.getScene(), roomParams);
 	orbit.setRoomGrid(currentRoomGrid);
+
+	// initial camera distance
+	orbit.setRadius(hud.getCamDistance());
+
 	const p0 = hud.getPos();
 	scenes.setSubjectOffset(p0.x, p0.y, p0.z);
 	setStatus('ready - click "Start camera"');
@@ -65,7 +72,7 @@ async function main() {
 
 	hud.on('sceneChange', async (kind) => {
 		currentRoomGrid?.dispose?.();
-		currentRoomGrid = await scenes.setScene(kind);
+		currentRoomGrid = await scenes.setScene(kind, roomParams);
 		orbit.setRoomGrid(currentRoomGrid);
 		const p = hud.getPos();
 		scenes.setSubjectOffset(p.x, p.y, p.z);
@@ -82,6 +89,22 @@ async function main() {
 	hud.on('posChange', (p) => {
 		scenes.setSubjectOffset(p.x, p.y, p.z);
 	});
+
+	hud.on('camDistChange', (r) => {
+		orbit.setRadius(r);
+	});
+
+	hud.on('roomChange', (p) => {
+		roomParams = p;
+
+		// makni stari grid
+		currentRoomGrid?.dispose?.();
+
+		// napravi novi grid bez resetiranja scene
+		currentRoomGrid = scenes.createRoomGrid(roomParams);
+		orbit.setRoomGrid(currentRoomGrid);
+	});
+
 
 	// resize
 	window.addEventListener('resize', () => world.resize());

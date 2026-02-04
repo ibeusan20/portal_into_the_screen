@@ -14,6 +14,11 @@ export class HudController {
 		this.strengthSlider = doc.getElementById('parallax');
 		this.smoothingSlider = doc.getElementById('smoothing');
 		this.toggleAxes = doc.getElementById('toggleAxes');
+		this.camDist = doc.getElementById('camDist');
+		this.roomW = doc.getElementById('roomW');
+		this.roomH = doc.getElementById('roomH');
+		this.roomD = doc.getElementById('roomD');
+		this.gridDiv = doc.getElementById('gridDiv');
 
 		this._listeners = {
 			startStop: [],
@@ -21,7 +26,9 @@ export class HudController {
 			sceneChange: [],
 			camViewToggle: [],
 			axesToggle: [],
-			posChange: []
+			posChange: [],
+			camDistChange: [],
+			roomChange: []
 		};
 
 		this._debugOn = false;
@@ -85,6 +92,27 @@ export class HudController {
 		this.posX.addEventListener('input', emitPos);
 		this.posY.addEventListener('input', emitPos);
 		this.posZ.addEventListener('input', emitPos);
+
+		const emitCamDist = () => {
+			this._emit('camDistChange', parseFloat(this.camDist.value));
+		};
+
+		const emitRoom = () => {
+			this._emit('roomChange', {
+				width: parseFloat(this.roomW.value),
+				height: parseFloat(this.roomH.value),
+				depth: parseFloat(this.roomD.value),
+				div: parseInt(this.gridDiv.value, 10),
+			});
+		};
+
+		this.camDist.addEventListener('input', emitCamDist);
+
+		this.roomW.addEventListener('input', emitRoom);
+		this.roomH.addEventListener('input', emitRoom);
+		this.roomD.addEventListener('input', emitRoom);
+		this.gridDiv.addEventListener('input', emitRoom);
+
 	}
 
 	on(eventName, cb) {
@@ -110,6 +138,19 @@ export class HudController {
 			z: parseFloat(this.posZ.value),
 		};
 	}
+	getCamDistance() {
+		return parseFloat(this.camDist.value);
+	}
+
+	getRoomParams() {
+		return {
+			width: parseFloat(this.roomW.value),
+			height: parseFloat(this.roomH.value),
+			depth: parseFloat(this.roomD.value),
+			div: parseInt(this.gridDiv.value, 10),
+		};
+	}
+
 
 	// UI updates
 	setStatus(text) { this.statusEl.textContent = text; }

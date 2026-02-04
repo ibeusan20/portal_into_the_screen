@@ -10,7 +10,7 @@ export class SceneFactory {
 		this.subject = null;
 	}
 
-	async setScene(kind) {
+	async setScene(kind, roomParams) {
 		this.world.clearContent();
 
 		this._addAxes(1.4);
@@ -18,8 +18,7 @@ export class SceneFactory {
 		this.subject.name = 'subject';
 		this.world.content.add(this.subject);
 
-
-		const roomGrid = new RoomGrid().build({ width: 8, height: 4, depth: 8, div: 16 }).addTo(this.world.content);
+		const roomGrid = this.createRoomGrid(roomParams ?? { width: 8, height: 4, depth: 8, div: 16 });
 
 		if (kind === 'cube') this._cube();
 		else if (kind === 'pyramid') this._pyramid();
@@ -46,6 +45,12 @@ export class SceneFactory {
 	setSubjectOffset(x, y, z) {
 		if (!this.subject) return;
 		this.subject.position.set(x, y, z);
+	}
+
+	createRoomGrid(roomParams) {
+		return new RoomGrid()
+			.build(roomParams)
+			.addTo(this.world.content);
 	}
 
 
