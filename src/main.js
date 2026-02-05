@@ -1,10 +1,13 @@
 import './style.css';
 
 import { World } from './three/World.js';
+import { RoomGrid } from './three/RoomGrid.js';
 import { OrbitCameraController } from './three/OrbitCameraController.js';
 import { FaceTracker } from './tracking/FaceTracker.js';
 import { HudController } from './ui/HudController.js';
-import { SceneFactory } from './scenes/SceneFactory.js';
+import { AssetCache } from './three/AssetCache.js';
+import { SceneManager } from './scenes/SceneManager.js';
+import { debounce } from './utils/debounce.js';
 
 async function main() {
 	const canvas = document.getElementById('c');
@@ -12,31 +15,31 @@ async function main() {
 
 	const hud = new HudController(document);
 	const world = new World(canvas);
-	const tracker = new FaceTracker(video);
+
+	const assets = new AssetCache();
+	const scenes = new SceneManager(world, assets);
+
+	const tracker = new FaceTracker(video, { targetFps: 20 }); // <-- perf: 20fps
 	const orbit = new OrbitCameraController(world.camera, world.target);
-	const scenes = new SceneFactory(world);
 
+	// Room grid (lives in world.room)
 	let roomParams = hud.getRoomParams();
-	let roomGrid = null;
-
-	const applyVideoVisibility = (on) => { video.style.display = on ? 'block' : 'none'; };
-
-	hud.setStatus('initializing…');
-
-	await tracker.init();
-
-	roomGrid = await scenes.setScene(hud.getScene(), roomParams);
+	let roomGrid = new RoomGrid().build(roomParams).addTo(world.room);
 	orbit.setRoomGrid(roomGrid);
 
+	// init scenes
 	scenes.setAxesVisible(hud.areAxesOn());
 	scenes.setSubjectOffset(hud.getPos().x, hud.getPos().y, hud.getPos().z);
-	orbit.setRadius(hud.getCamDistance());
+	await scenes.setScene(hud.getScene());
 
-	hud.setStatus('ready - click "Start camera"');
+	// base distance for auto-zoom
+	orbit.setBaseRadius(hud.getCamDistance());
+
+	hud.setStatus('ready • click "Start camera"');
 
 	tracker.on('update', (t) => {
 		if (!tracker.isRunning()) return;
-		hud.setStatus(t.hasFace ? 'camera OK - face detected' : 'camera OK - no face');
+		hud.setStatus(t.hasFace ? 'camera OK • face detected' : 'camera OK • no face');
 	});
 
 	tracker.on('error', () => {
@@ -44,6 +47,7 @@ async function main() {
 		hud.setStatus('detection error (check console)');
 	});
 
+	// --- UI events ---
 	hud.on('startStop', async () => {
 		if (!tracker.isRunning()) {
 			try {
@@ -61,42 +65,63 @@ async function main() {
 		}
 	});
 
-	hud.on('calibrate', () => orbit.calibrate());
+	hud.on('calibrate', () => orbit.calibrate(performance.now()));
 
-	hud.on('camViewToggle', (on) => applyVideoVisibility(on));
+	hud.on('camViewToggle', (on) => {
+		video.style.display = on ? 'block' : 'none';
+	});
 
 	hud.on('axesToggle', (on) => scenes.setAxesVisible(on));
 
 	hud.on('posChange', (p) => scenes.setSubjectOffset(p.x, p.y, p.z));
 
-	hud.on('camDistChange', (r) => orbit.setRadius(r));
-
-	hud.on('roomChange', (p) => {
-		roomParams = p;
-		roomGrid = scenes.rebuildRoom(roomParams);
-		orbit.setRoomGrid(roomGrid);
-	});
+	hud.on('camDistChange', (r) => orbit.setBaseRadius(r));
 
 	hud.on('sceneChange', async (kind) => {
-		roomGrid?.dispose?.();
-		roomGrid = await scenes.setScene(kind, roomParams);
-		orbit.setRoomGrid(roomGrid);
-
+		await scenes.setScene(kind);
 		scenes.setAxesVisible(hud.areAxesOn());
 		scenes.setSubjectOffset(hud.getPos().x, hud.getPos().y, hud.getPos().z);
 	});
 
+	// Perf: debounce room rebuild while dragging
+	const rebuildRoom = () => {
+		roomGrid?.dispose?.();
+		world.clearGroup(world.room);
+		roomGrid = new RoomGrid().build(roomParams).addTo(world.room);
+		orbit.setRoomGrid(roomGrid);
+	};
+
+	const rebuildRoomDebounced = debounce(rebuildRoom, 140);
+
+	hud.on('roomChange', (p) => {
+		roomParams = p;
+		rebuildRoomDebounced();
+	});
+
+	hud.on('roomChangeCommit', (p) => {
+		roomParams = p;
+		rebuildRoom(); // instant on release
+	});
+
 	window.addEventListener('resize', () => world.resize());
 
+	// --- render loop (60fps) ---
 	function animate() {
 		const now = performance.now();
 		const tracking = tracker.getLatest();
 
-		orbit.update(tracking, hud.getStrength(), hud.getSmoothing(), now);
+		orbit.update(tracking, {
+			strength: hud.getStrength(),
+			smoothing: hud.getSmoothing()
+		}, now);
+
 		world.render();
 
 		if (hud.isDebugOn()) {
-			hud.setDebugText(orbit.debugString(tracking, hud.getStrength(), hud.getSmoothing()));
+			hud.setDebugText(orbit.debugString(tracking, {
+				strength: hud.getStrength(),
+				smoothing: hud.getSmoothing()
+			}));
 		}
 
 		requestAnimationFrame(animate);

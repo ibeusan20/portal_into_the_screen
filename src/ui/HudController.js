@@ -87,10 +87,17 @@ export class HudController extends Emitter {
 		});
 
 		const emitRoom = () => this.emit('roomChange', this.getRoomParams());
+		const emitRoomCommit = () => this.emit('roomChangeCommit', this.getRoomParams());
+
 		this.roomW.addEventListener('input', emitRoom);
 		this.roomH.addEventListener('input', emitRoom);
 		this.roomD.addEventListener('input', emitRoom);
 		this.gridDiv.addEventListener('input', emitRoom);
+
+		this.roomW.addEventListener('change', emitRoomCommit);
+		this.roomH.addEventListener('change', emitRoomCommit);
+		this.roomD.addEventListener('change', emitRoomCommit);
+		this.gridDiv.addEventListener('change', emitRoomCommit);
 	}
 
 	// getters

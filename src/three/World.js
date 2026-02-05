@@ -36,11 +36,18 @@ export class World {
 		floor.receiveShadow = true;
 		this.scene.add(floor);
 
-		// content
+		// root content
 		this.content = new THREE.Group();
 		this.scene.add(this.content);
 
-		// orbit target
+		// layers
+		this.helpers = new THREE.Group(); // axes etc
+		this.room = new THREE.Group(); // grid room
+		this.stage = new THREE.Group(); // dome/stars etc
+		this.subject = new THREE.Group(); // object(s)
+
+		this.content.add(this.room, this.stage, this.subject, this.helpers);
+
 		this.target = new THREE.Vector3(0, 1.0, 0);
 	}
 
@@ -50,24 +57,21 @@ export class World {
 		this.camera.updateProjectionMatrix();
 	}
 
-	render() {
-		this.renderer.render(this.scene, this.camera);
-	}
+	render() { this.renderer.render(this.scene, this.camera); }
 
-	clearContent() {
-		// Proper removal + disposal
-		while (this.content.children.length > 0) {
-			const obj = this.content.children[0];
-			this.content.remove(obj);
-			this._disposeObject(obj);
+	clearGroup(group) {
+		while (group.children.length > 0) {
+			const obj = group.children[0];
+			group.remove(obj);
+			this.disposeObject(obj);
 		}
 	}
 
-	_disposeObject(obj) {
+	disposeObject(obj) {
 		obj.traverse?.((n) => {
 			if (n.geometry?.dispose) n.geometry.dispose();
 			if (n.material) {
-				if (Array.isArray(n.material)) n.material.forEach((m) => m?.dispose?.());
+				if (Array.isArray(n.material)) n.material.forEach(m => m?.dispose?.());
 				else n.material.dispose?.();
 			}
 		});
