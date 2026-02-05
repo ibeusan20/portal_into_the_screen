@@ -32,11 +32,11 @@ async function main() {
 	scenes.setSubjectOffset(hud.getPos().x, hud.getPos().y, hud.getPos().z);
 	orbit.setRadius(hud.getCamDistance());
 
-	hud.setStatus('ready • click "Start camera"');
+	hud.setStatus('ready - click "Start camera"');
 
 	tracker.on('update', (t) => {
 		if (!tracker.isRunning()) return;
-		hud.setStatus(t.hasFace ? 'camera OK • face detected' : 'camera OK • no face');
+		hud.setStatus(t.hasFace ? 'camera OK - face detected' : 'camera OK - no face');
 	});
 
 	tracker.on('error', () => {
