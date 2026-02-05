@@ -19,7 +19,7 @@ async function main() {
 	const assets = new AssetCache();
 	const scenes = new SceneManager(world, assets);
 
-	const tracker = new FaceTracker(video, { targetFps: 20 }); // <-- perf: 20fps
+	const tracker = new FaceTracker(video, { targetFps: 30 }); // <-- perf: 30fps
 	const orbit = new OrbitCameraController(world.camera, world.target);
 
 	// Room grid (lives in world.room)
@@ -35,11 +35,11 @@ async function main() {
 	// base distance for auto-zoom
 	orbit.setBaseRadius(hud.getCamDistance());
 
-	hud.setStatus('ready • click "Start camera"');
+	hud.setStatus('ready - click "Start camera"');
 
 	tracker.on('update', (t) => {
 		if (!tracker.isRunning()) return;
-		hud.setStatus(t.hasFace ? 'camera OK • face detected' : 'camera OK • no face');
+		hud.setStatus(t.hasFace ? 'camera OK - face detected' : 'camera OK - no face');
 	});
 
 	tracker.on('error', () => {
