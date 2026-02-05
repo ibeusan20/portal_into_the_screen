@@ -1,5 +1,9 @@
-export class HudController {
+import { Emitter } from '../utils/emitter.js';
+
+export class HudController extends Emitter {
 	constructor(doc) {
+		super();
+
 		this.hud = doc.getElementById('hud');
 		this.statusEl = doc.getElementById('status');
 		this.debugEl = doc.getElementById('debug');
@@ -13,46 +17,38 @@ export class HudController {
 		this.sceneSelect = doc.getElementById('sceneSelect');
 		this.strengthSlider = doc.getElementById('parallax');
 		this.smoothingSlider = doc.getElementById('smoothing');
-		this.toggleAxes = doc.getElementById('toggleAxes');
 		this.camDist = doc.getElementById('camDist');
+
+		this.posX = doc.getElementById('posX');
+		this.posY = doc.getElementById('posY');
+		this.posZ = doc.getElementById('posZ');
+
 		this.roomW = doc.getElementById('roomW');
 		this.roomH = doc.getElementById('roomH');
 		this.roomD = doc.getElementById('roomD');
 		this.gridDiv = doc.getElementById('gridDiv');
 
-		this._listeners = {
-			startStop: [],
-			calibrate: [],
-			sceneChange: [],
-			camViewToggle: [],
-			axesToggle: [],
-			posChange: [],
-			camDistChange: [],
-			roomChange: []
-		};
+		this.toggleAxes = doc.getElementById('toggleAxes');
 
 		this._debugOn = false;
 		this._camViewOn = false;
 
-		// start: menu collapsed + debug off
+		// default UI state
 		this.hud.classList.add('collapsed');
 		this.btnCollapse.textContent = 'Show menu';
 		this.btnToggleDebug.textContent = 'Debug: OFF';
-		this.btnToggleCamView.textContent = 'Show Camera';
+		this.btnToggleCamView.textContent = 'Show camera';
 		this.debugEl.style.display = 'none';
-		this.posX = doc.getElementById('posX');
-		this.posY = doc.getElementById('posY');
-		this.posZ = doc.getElementById('posZ');
 
-		this._wireEvents(doc);
+		this.#wire(doc);
 	}
 
-	_wireEvents(doc) {
-		this.btnStart.addEventListener('click', () => this._emit('startStop'));
-		this.btnCalibrate.addEventListener('click', () => this._emit('calibrate'));
+	#wire(doc) {
+		this.btnStart.addEventListener('click', () => this.emit('startStop'));
+		this.btnCalibrate.addEventListener('click', () => this.emit('calibrate'));
 
 		doc.defaultView.addEventListener('keydown', (e) => {
-			if (e.code === 'Space') this._emit('calibrate');
+			if (e.code === 'Space') this.emit('calibrate');
 		});
 
 		this.btnToggleDebug.addEventListener('click', () => {
@@ -69,77 +65,49 @@ export class HudController {
 
 		this.btnToggleCamView.addEventListener('click', () => {
 			this._camViewOn = !this._camViewOn;
-			this.btnToggleCamView.textContent = this._camViewOn ? 'Hide Camera' : 'Show Camera';
-			this._emit('camViewToggle', this._camViewOn);
+			this.btnToggleCamView.textContent = this._camViewOn ? 'Hide camera' : 'Show camera';
+			this.emit('camViewToggle', this._camViewOn);
 		});
 
 		this.sceneSelect.addEventListener('change', () => {
-			this._emit('sceneChange', this.sceneSelect.value);
+			this.emit('sceneChange', this.sceneSelect.value);
 		});
 
 		this.toggleAxes.addEventListener('change', () => {
-			this._emit('axesToggle', this.toggleAxes.checked);
+			this.emit('axesToggle', this.toggleAxes.checked);
 		});
 
-		const emitPos = () => {
-			this._emit('posChange', {
-				x: parseFloat(this.posX.value),
-				y: parseFloat(this.posY.value),
-				z: parseFloat(this.posZ.value),
-			});
-		};
-
+		const emitPos = () => this.emit('posChange', this.getPos());
 		this.posX.addEventListener('input', emitPos);
 		this.posY.addEventListener('input', emitPos);
 		this.posZ.addEventListener('input', emitPos);
 
-		const emitCamDist = () => {
-			this._emit('camDistChange', parseFloat(this.camDist.value));
-		};
+		this.camDist.addEventListener('input', () => {
+			this.emit('camDistChange', this.getCamDistance());
+		});
 
-		const emitRoom = () => {
-			this._emit('roomChange', {
-				width: parseFloat(this.roomW.value),
-				height: parseFloat(this.roomH.value),
-				depth: parseFloat(this.roomD.value),
-				div: parseInt(this.gridDiv.value, 10),
-			});
-		};
-
-		this.camDist.addEventListener('input', emitCamDist);
-
+		const emitRoom = () => this.emit('roomChange', this.getRoomParams());
 		this.roomW.addEventListener('input', emitRoom);
 		this.roomH.addEventListener('input', emitRoom);
 		this.roomD.addEventListener('input', emitRoom);
 		this.gridDiv.addEventListener('input', emitRoom);
-
-	}
-
-	on(eventName, cb) {
-		this._listeners[eventName]?.push(cb);
-	}
-
-	_emit(eventName, payload) {
-		const list = this._listeners[eventName] || [];
-		for (const cb of list) cb(payload);
 	}
 
 	// getters
 	getScene() { return this.sceneSelect.value; }
 	getStrength() { return parseFloat(this.strengthSlider.value); }
 	getSmoothing() { return parseFloat(this.smoothingSlider.value); }
+	getCamDistance() { return parseFloat(this.camDist.value); }
 	isDebugOn() { return this._debugOn; }
 	isCamViewOn() { return this._camViewOn; }
 	areAxesOn() { return this.toggleAxes.checked; }
+
 	getPos() {
 		return {
 			x: parseFloat(this.posX.value),
 			y: parseFloat(this.posY.value),
 			z: parseFloat(this.posZ.value),
 		};
-	}
-	getCamDistance() {
-		return parseFloat(this.camDist.value);
 	}
 
 	getRoomParams() {
@@ -151,12 +119,8 @@ export class HudController {
 		};
 	}
 
-
 	// UI updates
 	setStatus(text) { this.statusEl.textContent = text; }
 	setRunning(running) { this.btnStart.textContent = running ? 'Stop camera' : 'Start camera'; }
-	setDebugText(text) {
-		if (!this._debugOn) return;
-		this.debugEl.textContent = text;
-	}
+	setDebugText(text) { if (this._debugOn) this.debugEl.textContent = text; }
 }

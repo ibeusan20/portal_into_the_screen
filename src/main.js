@@ -16,100 +16,78 @@ async function main() {
 	const orbit = new OrbitCameraController(world.camera, world.target);
 	const scenes = new SceneFactory(world);
 
-	let currentRoomGrid = null;
+	let roomParams = hud.getRoomParams();
+	let roomGrid = null;
 
-	function setVideoVisible(on) {
-		video.style.display = on ? 'block' : 'none';
-	}
+	const applyVideoVisibility = (on) => { video.style.display = on ? 'block' : 'none'; };
 
-	// status helpers
-	const setStatus = (t) => hud.setStatus(t);
+	hud.setStatus('initializing…');
 
-	// tracker updates -> only for status text
-	tracker.setOnUpdate((t) => {
-		if (!tracker.isRunning()) return;
-		if (t.hasFace) setStatus('camera OK - face detected');
-		else setStatus('camera OK - no face (move closer / more light)');
-	});
-
-	// initial scene
-	setStatus('initializing…');
 	await tracker.init();
 
-	let roomParams = hud.getRoomParams();
+	roomGrid = await scenes.setScene(hud.getScene(), roomParams);
+	orbit.setRoomGrid(roomGrid);
 
-	currentRoomGrid = await scenes.setScene(hud.getScene(), roomParams);
-	orbit.setRoomGrid(currentRoomGrid);
-
-	// initial camera distance
+	scenes.setAxesVisible(hud.areAxesOn());
+	scenes.setSubjectOffset(hud.getPos().x, hud.getPos().y, hud.getPos().z);
 	orbit.setRadius(hud.getCamDistance());
 
-	const p0 = hud.getPos();
-	scenes.setSubjectOffset(p0.x, p0.y, p0.z);
-	setStatus('ready - click "Start camera"');
+	hud.setStatus('ready • click "Start camera"');
 
-	// UI events
+	tracker.on('update', (t) => {
+		if (!tracker.isRunning()) return;
+		hud.setStatus(t.hasFace ? 'camera OK • face detected' : 'camera OK • no face');
+	});
+
+	tracker.on('error', () => {
+		if (!tracker.isRunning()) return;
+		hud.setStatus('detection error (check console)');
+	});
+
 	hud.on('startStop', async () => {
 		if (!tracker.isRunning()) {
 			try {
-				setStatus('requesting camera permission…');
+				hud.setStatus('requesting camera permission…');
 				await tracker.start();
 				orbit.resetAutoCalibration();
 				hud.setRunning(true);
 			} catch {
-				setStatus('camera error (permission?)');
+				hud.setStatus('camera error (permission?)');
 			}
 		} else {
 			tracker.stop();
 			hud.setRunning(false);
-			setStatus('camera stopped');
+			hud.setStatus('camera stopped');
 		}
 	});
 
-	hud.on('calibrate', () => {
-		orbit.calibrate();
-	});
+	hud.on('calibrate', () => orbit.calibrate());
 
-	hud.on('sceneChange', async (kind) => {
-		currentRoomGrid?.dispose?.();
-		currentRoomGrid = await scenes.setScene(kind, roomParams);
-		orbit.setRoomGrid(currentRoomGrid);
-		const p = hud.getPos();
-		scenes.setSubjectOffset(p.x, p.y, p.z);
-	});
+	hud.on('camViewToggle', (on) => applyVideoVisibility(on));
 
-	hud.on('camViewToggle', (on) => {
-		setVideoVisible(on);
-	});
+	hud.on('axesToggle', (on) => scenes.setAxesVisible(on));
 
-	hud.on('axesToggle', (on) => {
-		scenes.setAxesVisible(on);
-	});
+	hud.on('posChange', (p) => scenes.setSubjectOffset(p.x, p.y, p.z));
 
-	hud.on('posChange', (p) => {
-		scenes.setSubjectOffset(p.x, p.y, p.z);
-	});
-
-	hud.on('camDistChange', (r) => {
-		orbit.setRadius(r);
-	});
+	hud.on('camDistChange', (r) => orbit.setRadius(r));
 
 	hud.on('roomChange', (p) => {
 		roomParams = p;
-
-		// makni stari grid
-		currentRoomGrid?.dispose?.();
-
-		// napravi novi grid bez resetiranja scene
-		currentRoomGrid = scenes.createRoomGrid(roomParams);
-		orbit.setRoomGrid(currentRoomGrid);
+		roomGrid = scenes.rebuildRoom(roomParams);
+		orbit.setRoomGrid(roomGrid);
 	});
 
+	hud.on('sceneChange', async (kind) => {
+		roomGrid?.dispose?.();
+		roomGrid = await scenes.setScene(kind, roomParams);
+		orbit.setRoomGrid(roomGrid);
 
-	// resize
+		scenes.setAxesVisible(hud.areAxesOn());
+		scenes.setSubjectOffset(hud.getPos().x, hud.getPos().y, hud.getPos().z);
+	});
+
 	window.addEventListener('resize', () => world.resize());
 
-	// render loop (always running)
 	function animate() {
 		const now = performance.now();
 		const tracking = tracker.getLatest();
@@ -123,6 +101,7 @@ async function main() {
 
 		requestAnimationFrame(animate);
 	}
+
 	animate();
 }
 

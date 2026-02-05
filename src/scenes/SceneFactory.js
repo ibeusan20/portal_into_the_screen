@@ -6,36 +6,42 @@ export class SceneFactory {
 	constructor(world) {
 		this.world = world;
 		this.loader = new GLTFLoader();
+
 		this.axes = null;
 		this.subject = null;
+		this.roomGrid = null;
+
+		this._gltfCache = new Map();
+
+		this.builders = {
+			cube: () => this.#cube(),
+			pyramid: () => this.#pyramid(),
+			hemisphere: () => this.#hemisphere(),
+			house: async () => this.#house(),
+		};
 	}
 
 	async setScene(kind, roomParams) {
 		this.world.clearContent();
 
-		this._addAxes(1.4);
+		this.#addAxes(1.4);
+
 		this.subject = new THREE.Group();
 		this.subject.name = 'subject';
 		this.world.content.add(this.subject);
 
-		const roomGrid = this.createRoomGrid(roomParams ?? { width: 8, height: 4, depth: 8, div: 16 });
+		this.roomGrid = new RoomGrid().build(roomParams).addTo(this.world.content);
 
-		if (kind === 'cube') this._cube();
-		else if (kind === 'pyramid') this._pyramid();
-		else if (kind === 'hemisphere') this._hemisphere();
-		else if (kind === 'house') await this._house();
+		const build = this.builders[kind] ?? this.builders.cube;
+		await build();
 
-		return roomGrid;
+		return this.roomGrid;
 	}
 
-	_addAxes(size = 1.2) {
-		if (this.axes) {
-			this.axes.removeFromParent?.();
-			this.axes = null;
-		}
-		this.axes = new THREE.AxesHelper(size);
-		this.axes.position.copy(this.world.target);
-		this.world.content.add(this.axes);
+	rebuildRoom(roomParams) {
+		this.roomGrid?.dispose?.();
+		this.roomGrid = new RoomGrid().build(roomParams).addTo(this.world.content);
+		return this.roomGrid;
 	}
 
 	setAxesVisible(on) {
@@ -47,14 +53,14 @@ export class SceneFactory {
 		this.subject.position.set(x, y, z);
 	}
 
-	createRoomGrid(roomParams) {
-		return new RoomGrid()
-			.build(roomParams)
-			.addTo(this.world.content);
+	#addAxes(size = 1.2) {
+		if (this.axes?.parent) this.axes.parent.remove(this.axes);
+		this.axes = new THREE.AxesHelper(size);
+		this.axes.position.copy(this.world.target);
+		this.world.content.add(this.axes);
 	}
 
-
-	_cube() {
+	#cube() {
 		const mesh = new THREE.Mesh(
 			new THREE.BoxGeometry(1, 1, 1),
 			new THREE.MeshStandardMaterial({ color: 0x6dd2ff, roughness: 0.35, metalness: 0.1 })
@@ -64,7 +70,7 @@ export class SceneFactory {
 		this.subject.add(mesh);
 	}
 
-	_pyramid() {
+	#pyramid() {
 		const mesh = new THREE.Mesh(
 			new THREE.ConeGeometry(0.75, 1.4, 4, 1),
 			new THREE.MeshStandardMaterial({ color: 0x9cff6d, roughness: 0.45, metalness: 0.05 })
@@ -83,19 +89,14 @@ export class SceneFactory {
 		this.subject.add(base);
 	}
 
-	_hemisphere() {
+	#hemisphere() {
 		const dome = new THREE.Mesh(
 			new THREE.SphereGeometry(8, 48, 32, 0, Math.PI * 2, 0, Math.PI / 2),
-			new THREE.MeshStandardMaterial({
-				color: 0x121a2f,
-				roughness: 1.0,
-				metalness: 0.0,
-				side: THREE.BackSide
-			})
+			new THREE.MeshStandardMaterial({ color: 0x121a2f, roughness: 1.0, metalness: 0.0, side: THREE.BackSide })
 		);
 		this.world.content.add(dome);
 
-		// stars (Points)
+		// Stars
 		const pts = new THREE.BufferGeometry();
 		const count = 500;
 		const pos = new Float32Array(count * 3);
@@ -108,9 +109,10 @@ export class SceneFactory {
 			pos[i * 3 + 2] = r * Math.sin(theta) * Math.sin(phi);
 		}
 		pts.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-		this.world.content.add(
-			new THREE.Points(pts, new THREE.PointsMaterial({ color: 0x9fb7ff, size: 0.03, sizeAttenuation: true }))
-		);
+		this.world.content.add(new THREE.Points(
+			pts,
+			new THREE.PointsMaterial({ color: 0x9fb7ff, size: 0.03, sizeAttenuation: true })
+		));
 
 		const icosa = new THREE.Mesh(
 			new THREE.IcosahedronGeometry(0.9, 1),
@@ -121,7 +123,66 @@ export class SceneFactory {
 		this.subject.add(icosa);
 	}
 
-	_proceduralHouse() {
+	async #house() {
+		const base = new THREE.Mesh(
+			new THREE.CylinderGeometry(3.2, 3.2, 0.18, 40),
+			new THREE.MeshStandardMaterial({ color: 0x1a2442, roughness: 0.95 })
+		);
+		base.receiveShadow = true;
+		base.position.set(0, 0.09, 0);
+		this.subject.add(base);
+
+		const url = '/models/house.glb';
+
+		try {
+			const model = await this.#loadCachedGLTF(url);
+			model.position.set(0, 0.18, 0);
+			this.subject.add(model);
+		} catch {
+			const house = this.#proceduralHouse();
+			house.position.set(0, 0.18, 0);
+			this.subject.add(house);
+		}
+	}
+
+	async #loadCachedGLTF(url) {
+		if (this._gltfCache.has(url)) {
+			// clone so each scene gets its own instance
+			return this._gltfCache.get(url).clone(true);
+		}
+
+		const gltf = await new Promise((resolve, reject) => this.loader.load(url, resolve, undefined, reject));
+		const model = gltf.scene;
+
+		model.traverse((n) => {
+			if (!n.isMesh) return;
+			n.castShadow = true;
+			n.receiveShadow = true;
+
+			const mats = Array.isArray(n.material) ? n.material : [n.material];
+			for (const m of mats) {
+				if (!m) continue;
+
+				m.side = THREE.DoubleSide;
+
+				if (m.name === 'window') {
+					m.transparent = true;
+					m.opacity = 0.65;
+					m.depthWrite = false;
+				} else {
+					m.transparent = false;
+					m.opacity = 1.0;
+					m.depthWrite = true;
+				}
+				m.needsUpdate = true;
+			}
+		});
+
+		this._gltfCache.set(url, model);
+		return model.clone(true);
+	}
+
+	#proceduralHouse() {
 		const house = new THREE.Group();
 
 		const wall = new THREE.Mesh(
@@ -165,53 +226,5 @@ export class SceneFactory {
 
 		house.add(w1, w2);
 		return house;
-	}
-
-	async _house() {
-		const base = new THREE.Mesh(
-			new THREE.CylinderGeometry(3.2, 3.2, 0.18, 40),
-			new THREE.MeshStandardMaterial({ color: 0x1a2442, roughness: 0.95 })
-		);
-		base.receiveShadow = true;
-		base.position.set(0, 0.09, 0);
-		this.subject.add(base);
-
-		const url = '/models/house.glb';
-
-		try {
-			const gltf = await new Promise((resolve, reject) => this.loader.load(url, resolve, undefined, reject));
-			const model = gltf.scene;
-
-			model.traverse((n) => {
-				if (!n.isMesh) return;
-
-				n.castShadow = true;
-				n.receiveShadow = true;
-
-				const mats = Array.isArray(n.material) ? n.material : [n.material];
-				for (const m of mats) {
-					if (!m) continue;
-					m.side = THREE.DoubleSide;
-
-					if (m.name === 'window') {
-						m.transparent = true;
-						m.opacity = 0.65;
-						m.depthWrite = false;
-					} else {
-						m.transparent = false;
-						m.opacity = 1.0;
-						m.depthWrite = true;
-					}
-					m.needsUpdate = true;
-				}
-			});
-
-			model.position.set(0, 0.18, 0);
-			this.subject.add(model);
-		} catch {
-			const house = this._proceduralHouse();
-			house.position.set(0, 0.18, 0);
-			this.subject.add(house);
-		}
 	}
 }

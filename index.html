@@ -2,122 +2,118 @@
 <html lang="hr">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Head‑tracked 3D (Web + webcam)</title>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Head-tracked 3D</title>
 </head>
 
 <body>
-  <div id="app">
-    <canvas id="c"></canvas>
+	<div id="app">
+		<canvas id="c"></canvas>
 
-    <!-- UI overlay -->
-    <div id="hud">
-      <div class="row">
-        <strong>Head‑tracked 3D</strong>
-        <span class="pill" id="status">initialization…</span>
-      </div>
+		<div id="hud">
+			<div class="row">
+				<strong>Head-tracked 3D</strong>
+				<span class="pill" id="status">initializing…</span>
+			</div>
 
-      <div class="row grid">
-        <label>
-          Scene
-          <select id="sceneSelect">
-            <option value="cube" selected>Cube (test)</option>
-            <option value="pyramid">Pyramid</option>
-            <option value="hemisphere">Hemisphere (dome)</option>
-            <option value="house">House (glTF if available)</option>
-          </select>
+			<div class="row buttons">
+				<button id="btnStart">Start camera</button>
+				<button id="btnToggleCamView">Show camera</button>
+				<button id="btnCalibrate" title="Space">Calibrate (Space)</button>
+				<button id="btnToggleDebug">Debug: OFF</button>
+				<button id="btnCollapse">Show menu</button>
+			</div>
 
-          <div class="subcontrol">
-            <div class="subcontrol-title">Smoothing (EMA)</div>
-            <input id="smoothing" type="range" min="0" max="0.95" step="0.01" value="0.20" />
-          </div>
+			<div class="row grid">
+				<label>
+					Scene
+					<select id="sceneSelect">
+						<option value="cube" selected>Cube (test)</option>
+						<option value="pyramid">Pyramid</option>
+						<option value="hemisphere">Hemisphere (dome)</option>
+						<option value="house">House (glTF if available)</option>
+					</select>
 
-          <div class="subcontrol">
-            <div class="subcontrol-title">Effect strength</div>
-            <input id="parallax" type="range" min="0" max="1.5" step="0.01" value="0.55" />
-          </div>
+					<div class="subcontrol">
+						<div class="subcontrol-title">Smoothing (EMA)</div>
+						<input id="smoothing" type="range" min="0" max="0.95" step="0.01" value="0.20" />
+					</div>
 
-          <div class="subcontrol">
-            <div class="subcontrol-title">Camera distance</div>
-            <input id="camDist" type="range" min="2" max="12" step="0.01" value="5.20" />
-          </div>
+					<div class="subcontrol">
+						<div class="subcontrol-title">Effect strength</div>
+						<input id="parallax" type="range" min="0" max="1.5" step="0.01" value="0.55" />
+					</div>
 
-          <details class="fold" id="foldPos">
-            <summary>Object position</summary>
+					<div class="subcontrol">
+						<div class="subcontrol-title">Camera distance</div>
+						<input id="camDist" type="range" min="2" max="12" step="0.01" value="5.20" />
+					</div>
 
-            <div class="subcontrol">
-              <div class="subcontrol-title">X</div>
-              <input id="posX" type="range" min="-2" max="2" step="0.01" value="0" />
-            </div>
+					<details class="fold" id="foldPos">
+						<summary>Object position</summary>
 
-            <div class="subcontrol">
-              <div class="subcontrol-title">Y</div>
-              <input id="posY" type="range" min="-1" max="2" step="0.01" value="0" />
-            </div>
+						<div class="subcontrol">
+							<div class="subcontrol-title">X</div>
+							<input id="posX" type="range" min="-2" max="2" step="0.01" value="0" />
+						</div>
 
-            <div class="subcontrol">
-              <div class="subcontrol-title">Z</div>
-              <input id="posZ" type="range" min="-2" max="2" step="0.01" value="0" />
-            </div>
-          </details>
+						<div class="subcontrol">
+							<div class="subcontrol-title">Y</div>
+							<input id="posY" type="range" min="-1" max="2" step="0.01" value="0" />
+						</div>
 
-          <details class="fold" id="foldRoom">
-            <summary>Room / grid</summary>
+						<div class="subcontrol">
+							<div class="subcontrol-title">Z</div>
+							<input id="posZ" type="range" min="-2" max="2" step="0.01" value="0" />
+						</div>
+					</details>
 
-            <div class="subcontrol">
-              <div class="subcontrol-title">Room width</div>
-              <input id="roomW" type="range" min="4" max="20" step="0.1" value="8" />
-            </div>
+					<details class="fold" id="foldRoom">
+						<summary>Room / grid</summary>
 
-            <div class="subcontrol">
-              <div class="subcontrol-title">Room height</div>
-              <input id="roomH" type="range" min="2" max="10" step="0.1" value="4" />
-            </div>
+						<div class="subcontrol">
+							<div class="subcontrol-title">Room width</div>
+							<input id="roomW" type="range" min="4" max="20" step="0.1" value="8" />
+						</div>
 
-            <div class="subcontrol">
-              <div class="subcontrol-title">Room depth</div>
-              <input id="roomD" type="range" min="4" max="20" step="0.1" value="8" />
-            </div>
+						<div class="subcontrol">
+							<div class="subcontrol-title">Room height</div>
+							<input id="roomH" type="range" min="2" max="10" step="0.1" value="4" />
+						</div>
 
-            <div class="subcontrol">
-              <div class="subcontrol-title">Grid divisions</div>
-              <input id="gridDiv" type="range" min="4" max="40" step="1" value="16" />
-            </div>
-          </details>
+						<div class="subcontrol">
+							<div class="subcontrol-title">Room depth</div>
+							<input id="roomD" type="range" min="4" max="20" step="0.1" value="8" />
+						</div>
 
-          <div class="subcontrol">
-            <label class="inline">
-              <input id="toggleAxes" type="checkbox" checked />
-              Show axes
-            </label>
-          </div>
-        </label>
-      </div>
+						<div class="subcontrol">
+							<div class="subcontrol-title">Grid divisions</div>
+							<input id="gridDiv" type="range" min="4" max="40" step="1" value="16" />
+						</div>
+					</details>
 
-      <br>
+					<div class="subcontrol">
+						<label class="inline">
+							<input id="toggleAxes" type="checkbox" checked />
+							Show axes
+						</label>
+					</div>
+				</label>
+			</div>
 
-      <div class="row buttons">
-        <button id="btnStart">Start Camera</button>
-        <button id="btnToggleCamView">Hide Camera</button>
-        <button id="btnCalibrate" title="Space">Calibrate (Space)</button>
-        <button id="btnToggleDebug">Debug: ON</button>
-        <button id="btnCollapse">Hide Menu</button>
-      </div>
+			<div id="debug"></div>
 
-      <div id="debug"></div>
+			<p class="hint">
+				Tip: kamera radi samo na <code>https</code> ili <code>http://localhost</code>.
+				Ako nema detekcije, pojačaj svjetlo i približi lice.
+			</p>
+		</div>
 
-      <p class="hint">
-        Tip: The camera in the browser only works on <code>https</code> <br> or on <code>http://localhost</code>.
-        If there is no detection, <br> check the lighting and make sure your face is visible.
-      </p>
-    </div>
+		<video id="video" autoplay playsinline muted></video>
+	</div>
 
-    <!-- Video is hidden; used only as a source for detection -->
-    <video id="video" autoplay playsinline muted></video>
-  </div>
-
-  <script type="module" src="/src/main.js"></script>
+	<script type="module" src="/src/main.js"></script>
 </body>
 
 </html>

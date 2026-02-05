@@ -10,12 +10,7 @@ export class World {
 		this.scene = new THREE.Scene();
 		this.scene.background = new THREE.Color(0x0b0d12);
 
-		this.camera = new THREE.PerspectiveCamera(
-			55,
-			window.innerWidth / window.innerHeight,
-			0.05,
-			200
-		);
+		this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.05, 200);
 
 		// lights
 		this.scene.add(new THREE.HemisphereLight(0xdde7ff, 0x223355, 0.65));
@@ -38,15 +33,14 @@ export class World {
 			new THREE.MeshStandardMaterial({ color: 0x101522, roughness: 0.9, metalness: 0.0 })
 		);
 		floor.rotation.x = -Math.PI / 2;
-		floor.position.y = 0;
 		floor.receiveShadow = true;
 		this.scene.add(floor);
 
-		// content group
+		// content
 		this.content = new THREE.Group();
 		this.scene.add(this.content);
 
-		// target for orbit
+		// orbit target
 		this.target = new THREE.Vector3(0, 1.0, 0);
 	}
 
@@ -61,15 +55,21 @@ export class World {
 	}
 
 	clearContent() {
-		while (this.content.children.length) {
-			const obj = this.content.children.pop();
-			obj.traverse?.((n) => {
-				if (n.geometry) n.geometry.dispose?.();
-				if (n.material) {
-					if (Array.isArray(n.material)) n.material.forEach((m) => m.dispose?.());
-					else n.material.dispose?.();
-				}
-			});
+		// Proper removal + disposal
+		while (this.content.children.length > 0) {
+			const obj = this.content.children[0];
+			this.content.remove(obj);
+			this._disposeObject(obj);
 		}
+	}
+
+	_disposeObject(obj) {
+		obj.traverse?.((n) => {
+			if (n.geometry?.dispose) n.geometry.dispose();
+			if (n.material) {
+				if (Array.isArray(n.material)) n.material.forEach((m) => m?.dispose?.());
+				else n.material.dispose?.();
+			}
+		});
 	}
 }

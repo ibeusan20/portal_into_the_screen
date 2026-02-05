@@ -1,25 +1,18 @@
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { clamp } from '../utils/math.js';
+import { Emitter } from '../utils/emitter.js';
 
-export class FaceTracker {
+export class FaceTracker extends Emitter {
 	constructor(videoEl) {
+		super();
 		this.video = videoEl;
+
 		this.landmarker = null;
-		this.running = false;
 		this.stream = null;
+		this.running = false;
 		this._raf = 0;
 
-		this.latest = {
-			hasFace: false,
-			x: 0, y: 0,   // normalized [-1..1]
-			cx: 0.5, cy: 0.5
-		};
-
-		this.onUpdate = () => { };
-	}
-
-	setOnUpdate(cb) {
-		this.onUpdate = cb || (() => { });
+		this.latest = { hasFace: false, x: 0, y: 0, cx: 0.5, cy: 0.5 };
 	}
 
 	async init() {
@@ -40,6 +33,9 @@ export class FaceTracker {
 			numFaces: 1
 		});
 	}
+
+	isRunning() { return this.running; }
+	getLatest() { return this.latest; }
 
 	async start() {
 		if (this.running) return;
@@ -67,16 +63,8 @@ export class FaceTracker {
 		}
 		this.video.srcObject = null;
 
-		this.latest.hasFace = false;
-		this.onUpdate(this.latest);
-	}
-
-	isRunning() {
-		return this.running;
-	}
-
-	getLatest() {
-		return this.latest;
+		this.latest = { ...this.latest, hasFace: false };
+		this.emit('update', this.latest);
 	}
 
 	_loop() {
@@ -91,23 +79,26 @@ export class FaceTracker {
 
 				if (hasFace) {
 					const lm = res.faceLandmarks[0];
+
 					let sx = 0, sy = 0;
 					for (let i = 0; i < lm.length; i++) { sx += lm[i].x; sy += lm[i].y; }
+
 					const cx = sx / lm.length;
 					const cy = sy / lm.length;
 
-					const xNorm = clamp((cx - 0.5) / 0.5, -1, 1);
-					const yNorm = clamp((cy - 0.5) / 0.5, -1, 1);
+					const x = clamp((cx - 0.5) / 0.5, -1, 1);
+					const y = clamp((cy - 0.5) / 0.5, -1, 1);
 
-					this.latest = { hasFace: true, x: xNorm, y: yNorm, cx, cy };
+					this.latest = { hasFace: true, x, y, cx, cy };
 				} else {
 					this.latest = { ...this.latest, hasFace: false };
 				}
 
-				this.onUpdate(this.latest);
-			} catch {
+				this.emit('update', this.latest);
+			} catch (e) {
 				this.latest = { ...this.latest, hasFace: false };
-				this.onUpdate(this.latest);
+				this.emit('error', e);
+				this.emit('update', this.latest);
 			}
 		}
 
