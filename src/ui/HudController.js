@@ -13,6 +13,7 @@ export class HudController extends Emitter {
 		this.btnToggleDebug = doc.getElementById('btnToggleDebug');
 		this.btnCollapse = doc.getElementById('btnCollapse');
 		this.btnToggleCamView = doc.getElementById('btnToggleCamView');
+		this.toggleAutoZoom = doc.getElementById('toggleAutoZoom');
 
 		this.sceneSelect = doc.getElementById('sceneSelect');
 		this.strengthSlider = doc.getElementById('parallax');
@@ -77,6 +78,10 @@ export class HudController extends Emitter {
 			this.emit('axesToggle', this.toggleAxes.checked);
 		});
 
+		this.toggleAutoZoom.addEventListener('change', () => {
+			this.emit('autoZoomToggle', this.toggleAutoZoom.checked);
+		});
+
 		const emitPos = () => this.emit('posChange', this.getPos());
 		this.posX.addEventListener('input', emitPos);
 		this.posY.addEventListener('input', emitPos);
@@ -108,6 +113,7 @@ export class HudController extends Emitter {
 	isDebugOn() { return this._debugOn; }
 	isCamViewOn() { return this._camViewOn; }
 	areAxesOn() { return this.toggleAxes.checked; }
+	isAutoZoomOn() { return this.toggleAutoZoom.checked; }
 
 	getPos() {
 		return {

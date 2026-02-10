@@ -22,10 +22,13 @@ export class OrbitCameraController {
 		this._lastAutoCalibAt = 0;
 
 		this.roomGrid = null;
+
+		this.autoZoomOn = true;
 	}
 
 	setRoomGrid(grid) { this.roomGrid = grid; }
 	setBaseRadius(r) { this.baseR = r; }
+	setAutoZoom(on) { this.autoZoomOn = !!on; }
 
 	resetAutoCalibration() {
 		this.autoCalibrated = false;
@@ -140,7 +143,7 @@ orbit:
 		const zoomPower = 1.25;
 		let r = this.baseR;
 
-		if (!lost && this.neutral.eye > 1e-6 && this.filtered.eye > 1e-6) {
+		if (this.autoZoomOn && !lost && this.neutral.eye > 1e-6 && this.filtered.eye > 1e-6) {
 			const factor = Math.pow(this.neutral.eye / this.filtered.eye, zoomPower);
 			r = this.baseR * clamp(factor, 0.70, 1.55);
 		}

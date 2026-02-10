@@ -34,6 +34,7 @@ async function main() {
 
 	// base distance for auto-zoom
 	orbit.setBaseRadius(hud.getCamDistance());
+	orbit.setAutoZoom(hud.isAutoZoomOn());
 
 	hud.setStatus('ready - click "Start camera"');
 
@@ -76,6 +77,10 @@ async function main() {
 	hud.on('posChange', (p) => scenes.setSubjectOffset(p.x, p.y, p.z));
 
 	hud.on('camDistChange', (r) => orbit.setBaseRadius(r));
+
+	hud.on('autoZoomToggle', (on) => {
+		orbit.setAutoZoom(on);
+	});
 
 	hud.on('sceneChange', async (kind) => {
 		await scenes.setScene(kind);
