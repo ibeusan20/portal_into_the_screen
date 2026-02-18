@@ -2,7 +2,9 @@
 
 This project performs head‑tracking (translation + yaw/pitch) using your web camera and moves a 3D camera in a Three.js scene accordingly.
 
-<img width="1857" height="976" alt="Screenshot 2026-02-04 004309" src="https://github.com/user-attachments/assets/75169757-b6f1-4c7b-a7a6-c328fed80b43" /> <img width="1854" height="976" alt="Screenshot 2026-02-04 004250" src="https://github.com/user-attachments/assets/85ac4a0f-2674-4502-9fc3-eb20cbc3a33d" />
+<img width="1841" height="946" alt="image" src="https://github.com/user-attachments/assets/53138e27-dd97-4ba0-93c2-f18d136b0e3f" />
+
+<img width="1855" height="973" alt="image" src="https://github.com/user-attachments/assets/432a7099-c59b-48f0-8788-adc2684e5fd2" />
 
 ## Prerequisites
 - Node.js 18+ (recommendation: 20+)
