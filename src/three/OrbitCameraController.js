@@ -21,6 +21,9 @@ export class OrbitCameraController {
 		this._stableSince = 0;
 		this._lastAutoCalibAt = 0;
 
+		this.orbitCenter = target.clone(); // fixed point of the orbit (initially the world target)
+		this.orbitCenterFixedZ = this.orbitCenter.z;
+
 		this.roomGrid = null;
 
 		this.autoZoomOn = true;
@@ -157,11 +160,18 @@ orbit:
 		const cp = Math.cos(this.orbit.pitch);
 		const sp = Math.sin(this.orbit.pitch);
 
-		const x = this.target.x + this.orbit.r * sy * cp;
-		const z = this.target.z + this.orbit.r * cy * cp;
-		const y = this.target.y + this.orbit.r * sp + 0.10;
+		const c = this.orbitCenter;
+
+		const x = c.x + this.orbit.r * sy * cp;
+		const z = c.z + this.orbit.r * cy * cp;
+		const y = c.y + this.orbit.r * sp + 0.10;
 
 		this.camera.position.set(x, y, z);
-		this.camera.lookAt(this.target);
+		this.camera.lookAt(this.target); // target is the “anchor” user looks at
+
+		// track target in X/Y for straight view, Z stays fixed so targetZ pushes/pulls object toward camera
+		this.orbitCenter.x = this.target.x;
+		this.orbitCenter.y = this.target.y;
+		this.orbitCenter.z = this.orbitCenterFixedZ;
 	}
 }
