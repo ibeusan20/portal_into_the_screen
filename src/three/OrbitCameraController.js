@@ -100,7 +100,7 @@ orbit:
 		// stability conditions (tune)
 		const EPS_POS = 0.004; // how much it can "jitter"
 		const EPS_EYE = 0.0025;
-		const STABLE_MS = 1400;
+		const STABLE_MS = 20000;
 		const COOLDOWN_MS = 2200;
 
 		const dx = Math.abs(this.filtered.x - this._prev.x);
