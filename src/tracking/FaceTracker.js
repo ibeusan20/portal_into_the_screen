@@ -27,7 +27,8 @@ export class FaceTracker extends Emitter {
 			// centroid in [0..1]
 			cx: 0.5, cy: 0.5,
 			// eye distance (in [0..~1]) - used for auto-zoom
-			eyeDist: 0.18
+			eyeDist: 0.18,
+			t: 0
 		};
 	}
 
@@ -58,9 +59,15 @@ export class FaceTracker extends Emitter {
 		await this.init();
 
 		this.stream = await navigator.mediaDevices.getUserMedia({
-			video: { width: 1280, height: 720, facingMode: 'user' },
+			video: {
+				width: { ideal: 640 },
+				height: { ideal: 480 },
+				frameRate: { ideal: 30, max: 30 },
+				facingMode: 'user'
+			},
 			audio: false
 		});
+
 
 		this.video.srcObject = this.stream;
 		await this.video.play();
@@ -137,7 +144,7 @@ export class FaceTracker extends Emitter {
 			const x = clamp((cx - 0.5) / 0.5, -1, 1);
 			const y = clamp((cy - 0.5) / 0.5, -1, 1);
 
-			this.latest = { hasFace: true, x, y, cx, cy, eyeDist };
+			this.latest = { hasFace: true, x, y, cx, cy, eyeDist, t: now };
 			this.emit('update', this.latest);
 		} catch (e) {
 			this.latest = { ...this.latest, hasFace: false };

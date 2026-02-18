@@ -25,8 +25,8 @@ export class OrbitCameraController {
 		this.orbitCenterFixedZ = this.orbitCenter.z;
 
 		this.roomGrid = null;
-
 		this.autoZoomOn = true;
+		this._lastSampleT = -1;
 	}
 
 	setRoomGrid(grid) { this.roomGrid = grid; }
@@ -76,6 +76,9 @@ orbit:
 
 	#updateFiltered(tracking, hold, now) {
 		if (!tracking?.hasFace) return;
+		if (tracking.t === this._lastSampleT) return; // no new data
+		this._lastSampleT = tracking.t;
+
 
 		this.lastSeenAt = now;
 

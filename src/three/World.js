@@ -2,10 +2,12 @@ import * as THREE from 'three';
 
 export class World {
 	constructor(canvas) {
-		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true , powerPreference: 'high-performance'});
+		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // limit to 1.5 for performance (especially on mobile)
 		this.renderer.setSize(window.innerWidth, window.innerHeight, false);
 		this.renderer.shadowMap.enabled = true;
+		this.renderer.shadowMap.autoUpdate = false;
+		this.renderer.shadowMap.needsUpdate = true;
 
 		this.scene = new THREE.Scene();
 		this.scene.background = new THREE.Color(0x0b0d12);
@@ -18,7 +20,7 @@ export class World {
 		const dir = new THREE.DirectionalLight(0xffffff, 1.15);
 		dir.position.set(3.5, 6.0, 3.0);
 		dir.castShadow = true;
-		dir.shadow.mapSize.set(2048, 2048);
+		dir.shadow.mapSize.set(1024, 1024);
 		dir.shadow.camera.near = 0.1;
 		dir.shadow.camera.far = 30;
 		dir.shadow.camera.left = -8;

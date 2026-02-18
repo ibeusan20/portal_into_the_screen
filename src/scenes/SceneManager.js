@@ -48,6 +48,7 @@ export class SceneManager {
 		});
 
 		this.#applyAnchor();
+		this.world.renderer.shadowMap.needsUpdate = true;
 	}
 
 	setTargetPoint(x, y, z) {
