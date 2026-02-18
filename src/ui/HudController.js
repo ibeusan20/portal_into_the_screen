@@ -24,6 +24,11 @@ export class HudController extends Emitter {
 		this.posY = doc.getElementById('posY');
 		this.posZ = doc.getElementById('posZ');
 
+		this.targetX = doc.getElementById('targetX');
+		this.targetY = doc.getElementById('targetY');
+		this.targetZ = doc.getElementById('targetZ');
+
+
 		this.roomW = doc.getElementById('roomW');
 		this.roomH = doc.getElementById('roomH');
 		this.roomD = doc.getElementById('roomD');
@@ -91,6 +96,13 @@ export class HudController extends Emitter {
 			this.emit('camDistChange', this.getCamDistance());
 		});
 
+		const emitTarget = () => this.emit('targetChange', this.getTarget());
+
+		this.targetX.addEventListener('input', emitTarget);
+		this.targetY.addEventListener('input', emitTarget);
+		this.targetZ.addEventListener('input', emitTarget);
+
+
 		const emitRoom = () => this.emit('roomChange', this.getRoomParams());
 		const emitRoomCommit = () => this.emit('roomChangeCommit', this.getRoomParams());
 
@@ -122,6 +134,15 @@ export class HudController extends Emitter {
 			z: parseFloat(this.posZ.value),
 		};
 	}
+
+	getTarget() {
+		return {
+			x: parseFloat(this.targetX.value),
+			y: parseFloat(this.targetY.value),
+			z: parseFloat(this.targetZ.value),
+		};
+	}
+
 
 	getRoomParams() {
 		return {

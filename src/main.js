@@ -32,6 +32,14 @@ async function main() {
 	scenes.setSubjectOffset(hud.getPos().x, hud.getPos().y, hud.getPos().z);
 	await scenes.setScene(hud.getScene());
 
+	// --- HUD events ---
+	const p0 = hud.getPos();
+	scenes.setSubjectOffset(p0.x, p0.y, p0.z);
+
+	const t0 = hud.getTarget();
+	scenes.setTargetPoint(t0.x, t0.y, t0.z);
+
+
 	// base distance for auto-zoom
 	orbit.setBaseRadius(hud.getCamDistance());
 	orbit.setAutoZoom(hud.isAutoZoomOn());
@@ -109,6 +117,11 @@ async function main() {
 	});
 
 	window.addEventListener('resize', () => world.resize());
+
+	hud.on('targetChange', (t) => {
+		scenes.setTargetPoint(t.x, t.y, t.z);
+	}); // re-apply the anchor
+
 
 	// --- render loop (60fps) ---
 	function animate() {
